@@ -73,46 +73,49 @@ const getValidateUserUrlBodySync = Meteor.wrapAsync((callback) => {
   });
 });
 function validateUsers(checkUsername) {
-  let checkResult = false;
-  const validatingUserList = dbValidatingUsers.find({}, {disableOplog: true}).fetch();
-  if (validatingUserList.length > 0) {
-    const $pushList = getValidateUserUrlBodySync();
-    validatingUserList.forEach((validatingUser) => {
-      const username = validatingUser.username;
-      const $userPushList = $pushList.find('.push-userid:contains(' + username + ')').closest('.push');
-      if ($userPushList.length > 0) {
-        const validateCode = validatingUser.validateCode;
-        if ($userPushList.find('.push-content:contains(' + validateCode + ')').length > 0) {
-          if (checkUsername === username) {
-            checkResult = true;
-          }
-          const password = validatingUser.password;
-          const existUser = Meteor.users.findOne({username});
-          if (existUser) {
-            Accounts.setPassword(existUser._id, password, {
-              logout: true
-            });
-            dbValidatingUsers.remove({_id: validatingUser._id});
-          }
-          else {
-            const profile = {
-              money: config.beginMoney
-            };
-            Accounts.createUser({username, password, profile});
-            dbLog.insert({
-              logType: '驗證通過',
-              username: [username],
-              price: config.beginMoney,
-              createdAt: new Date()
-            });
-            dbValidatingUsers.remove({_id: validatingUser._id});
-          }
-        }
-      }
-    });
-  }
+  if (typeof checkUsername !== 'string')
+    return false;
+  const validatingUserData = dbValidatingUsers.find({username:checkUsername},{disableOplog:true}).fetch();
+  if (validatingUserData.length !== 1)
+    return false;
 
-  return checkResult;
+  const $pushList = getValidateUserUrlBodySync();
+  const validatingUserdata = validatingUserData[0];
+  const username = validatingUserdata.username;
+  const validateCode = validatingUserdata.validateCode;
+
+  //$userPushList will get last comment
+  const $userPushList = $pushList.find('.push-userid:contains(' + username + ')').closest('.push').last();
+
+  if ($userPushList.length !== 1)
+    return false;
+
+  const comment = $userPushList.find('.push-content').text().substring(2,2+validateCode.length);
+  if (comment !== validateCode)
+    return false;
+
+  const password = validatingUser.password;
+  const existUser = Meteor.users.findOne({username});
+  if (existUser) {
+    Accounts.setPassword(existUser._id, password, {
+      logout: true
+    });
+    dbValidatingUsers.remove({_id: validatingUser._id});
+  }
+  else {
+    const profile = {
+      money: config.beginMoney
+    };
+    Accounts.createUser({username, password, profile});
+    dbLog.insert({
+      logType: '驗證通過',
+      username: [username],
+      price: config.beginMoney,
+      createdAt: new Date()
+    });
+    dbValidatingUsers.remove({_id: validatingUser._id});
+  }
+  return true;
 }
 
 Meteor.publish('accountInfo', function(username) {
