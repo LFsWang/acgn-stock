@@ -73,8 +73,6 @@ const getValidateUserUrlBodySync = Meteor.wrapAsync((callback) => {
   });
 });
 function validateUsers(checkUsername) {
-  if (typeof checkUsername !== 'string')
-    return false;
   const validatingUserData = dbValidatingUsers.find({username:checkUsername},{disableOplog:true}).fetch();
   if (validatingUserData.length !== 1)
     return false;
