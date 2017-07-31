@@ -212,7 +212,7 @@ Template.companySummary.events({
     const orderId = $(event.currentTarget).attr('data-cancel-order');
     const orderData = dbOrders.findOne(orderId);
     const message = '' +
-      '確定要取消「以$' + orderData.lastPrice +
+      '確定要取消「以$' + orderData.unitPrice +
       '單價' + orderData.orderType + '數量' + orderData.amount + '的「' +
       orderData.companyName + '」公司股份」這筆訂單嗎？（付出手續費一元）';
     if (window.confirm(message)) {
