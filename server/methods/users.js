@@ -91,7 +91,7 @@ function validateUsers(checkUsername) {
     return false;
 
   const comment = $userPushList.find('.push-content').text().substring(2,2+validateCode.length);
-  if (comment !== validateCode)
+  if ( !validateCode || comment !== validateCode )
     return false;
 
   const password = validatingUser.password;
